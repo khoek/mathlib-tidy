@@ -162,6 +162,10 @@ calc (a⁻¹ - b⁻¹) = ((a⁻¹ - b⁻¹) * (a * b)) / (a * b) : by rwa [mul_d
     simp
   end
 
+-- lemma inv_sub_inv_eq (ha : a ≠ 0) (hb : b ≠ 0) : a⁻¹ - b⁻¹ = (b - a) / (a * b) :=
+-- have a * b ≠ 0, by simp [mul_eq_zero_iff_eq_zero_or_eq_zero, ha, hb],
+-- calc (a⁻¹ - b⁻¹) = ((a⁻¹ - b⁻¹) * (a * b)) / (a * b) : by rewrite_search
+
 lemma div_right_comm (a b c : α) : (a / b) / c = (a / c) / b :=
 if b0 : b = 0 then by simp [b0] else
 if c0 : c = 0 then by simp [c0] else

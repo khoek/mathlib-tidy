@@ -6,7 +6,7 @@ Authors: Nathaniel Thomas, Jeremy Avigad, Johannes Hölzl
 Modules over a ring.
 -/
 
-import algebra.ring algebra.big_operators data.set.lattice
+import algebra.ring algebra.big_operators data.set.lattice tidy.tidy
 open function
 
 universes u v w x
@@ -83,18 +83,17 @@ instance module.to_semimodule : semimodule α β :=
 @[simp] theorem neg_smul : -r • x = - (r • x) :=
 eq_neg_of_add_eq_zero (by rw [← add_smul, add_left_neg, zero_smul])
 
-theorem neg_one_smul (x : β) : (-1 : α) • x = -x := by simp
+local attribute [search, simp] smul_add add_smul mul_smul
 
-@[simp] theorem smul_neg : r • (-x) = -(r • x) :=
-by rw [← neg_one_smul x, ← mul_smul, mul_neg_one, neg_smul]
+@[search] theorem neg_one_smul (x : β) : (-1 : α) • x = -x := □
 
-theorem smul_sub (r : α) (x y : β) : r • (x - y) = r • x - r • y :=
-by simp [smul_add]
+@[simp] theorem smul_neg : r • (-x) = -(r • x) := □
 
-theorem sub_smul (r s : α) (y : β) : (r - s) • y = r • y - s • y :=
-by simp [add_smul]
+theorem smul_sub (r : α) (x y : β) : r • (x - y) = r • x - r • y := □
 
-lemma smul_smul : r • s • x = (r * s) • x := mul_smul.symm
+theorem sub_smul (r s : α) (y : β) : (r - s) • y = r • y - s • y := □
+
+lemma smul_smul : r • s • x = (r * s) • x := □!
 
 end module
 
@@ -114,10 +113,14 @@ instance ring.to_module [r : ring α] : module α α :=
 
 @[simp] lemma smul_eq_mul [ring α] {a a' : α} : a • a' = a * a' := rfl
 
+local attribute [search] smul_add add_smul mul_smul one_smul zero_smul smul_zero neg_smul neg_one_smul smul_neg neg_one_smul smul_neg smul_sub sub_smul smul_smul smul_eq_mul
+
 structure is_linear_map {α : Type u} {β : Type v} {γ : Type w} [ring α] [module α β] [module α γ]
   (f : β → γ) : Prop :=
 (add  : ∀x y, f (x + y) = f x + f y)
 (smul : ∀c x, f (c • x) = c • f x)
+
+local attribute [search] is_linear_map.add is_linear_map.smul
 
 namespace is_linear_map
 variables [ring α] [module α β] [module α γ] [module α δ]
@@ -128,61 +131,54 @@ section
 variable (hf : is_linear_map f)
 include hf
 
-@[simp] lemma zero : f 0 = 0 :=
-calc f 0 = f (0 • 0 : β) : by rw [zero_smul]
-     ... = 0 : by rw [hf.smul]; simp
+@[simp, search] lemma zero : f 0 = 0 :=
+calc f 0 = f (0 • 0 : β) : □
+     ... = 0 : by rewrite_search
 
-@[simp] lemma neg (x : β) : f (- x) = - f x :=
-eq_neg_of_add_eq_zero $ by rw [←hf.add]; simp [hf.zero]
+@[simp, search] lemma neg (x : β) : f (- x) = - f x :=
+eq_neg_of_add_eq_zero $ □
 
-@[simp] lemma sub (x y : β) : f (x - y) = f x - f y :=
-by simp [hf.neg, hf.add]
+@[simp] lemma sub (x y : β) : f (x - y) = f x - f y := □
 
 @[simp] lemma sum {ι : Type x} {t : finset ι} {g : ι → β} : f (t.sum g) = t.sum (λi, f (g i)) :=
 (finset.sum_hom f hf.zero hf.add).symm
 
 end
 
-lemma comp {g : δ → β} (hf : is_linear_map f) (hg : is_linear_map g) : is_linear_map (f ∘ g) :=
-by refine {..}; simp [(∘), hg.add, hf.add, hg.smul, hf.smul]
+lemma comp {g : δ → β} (hf : is_linear_map f) (hg : is_linear_map g) : is_linear_map (f ∘ g) := by qed [comp]
 
-lemma id : is_linear_map (id : β → β) :=
-by refine {..}; simp
+lemma id : is_linear_map (id : β → β) := □
 
 lemma inverse {f : γ → β} {g : β → γ}
   (hf : is_linear_map f) (h₁ : left_inverse g f) (h₂ : right_inverse g f): is_linear_map g :=
 ⟨assume x y,
   have g (f (g (x + y))) = g (f (g x + g y)),
-    by rw [h₂ (x + y), hf.add, h₂ x, h₂ y],
+    by rewrite_search_with [h₂],
   by rwa [h₁ (g (x + y)), h₁ (g x + g y)] at this,
 assume a b,
   have g (f (g (a • b))) = g (f (a • g b)),
-    by rw [h₂ (a • b), hf.smul, h₂ b],
+    by rewrite_search_with [h₂],
   by rwa [h₁ (g (a • b)), h₁ (a • g b)] at this ⟩
 
-lemma map_zero : is_linear_map (λb, 0 : β → γ) :=
-by refine {..}; simp
+lemma map_zero : is_linear_map (λb, 0 : β → γ) := □
 
-lemma map_neg (hf : is_linear_map f) : is_linear_map (λb, - f b) :=
-by refine {..}; simp [hf.add, hf.smul]
+lemma map_neg (hf : is_linear_map f) : is_linear_map (λb, - f b) := □
 
-lemma map_add (hf : is_linear_map f) (hg : is_linear_map g) : is_linear_map (λb, f b + g b) :=
-by refine {..}; simp [hg.add, hf.add, hg.smul, hf.smul, smul_add]
+lemma map_add (hf : is_linear_map f) (hg : is_linear_map g) : is_linear_map (λb, f b + g b) := □
 
 lemma map_sum [decidable_eq δ] {t : finset δ} {f : δ → β → γ} :
   (∀d∈t, is_linear_map (f d)) → is_linear_map (λb, t.sum $ λd, f d b) :=
 finset.induction_on t (by simp [map_zero]) (by simp [map_add] {contextual := tt})
 
-lemma map_sub (hf : is_linear_map f) (hg : is_linear_map g) : is_linear_map (λb, f b - g b) :=
-by refine {..}; simp [hg.add, hf.add, hg.smul, hf.smul, smul_add]
+lemma map_sub (hf : is_linear_map f) (hg : is_linear_map g) : is_linear_map (λb, f b - g b) := □
+
+suggestion arithmetic
 
 lemma map_smul_right {α : Type u} {β : Type v} {γ : Type w} [comm_ring α] [module α β] [module α γ]
   {f : β → γ} {r : α} (hf : is_linear_map f) :
-  is_linear_map (λb, r • f b) :=
-by refine {..}; simp [hf.add, hf.smul, smul_add, smul_smul, mul_comm]
+  is_linear_map (λb, r • f b) := □
 
-lemma map_smul_left {f : γ → α} (hf : is_linear_map f) : is_linear_map (λb, f b • x) :=
-by refine {..}; simp [hf.add, hf.smul, add_smul, smul_smul]
+lemma map_smul_left {f : γ → α} (hf : is_linear_map f) : is_linear_map (λb, f b • x) := □
 
 end is_linear_map
 
@@ -207,31 +203,35 @@ lemma zero : (0 : β) ∈ p := is_submodule.zero_ α p
 
 lemma add : x ∈ p → y ∈ p → x + y ∈ p := is_submodule.add_ α
 
-lemma neg (hx : x ∈ p) : -x ∈ p := by rw ← neg_one_smul x; exact smul _ hx
+local attribute [simp] is_submodule.zero is_submodule.add is_submodule.smul
+
+lemma neg (hx : x ∈ p) : -x ∈ p := by rw ← neg_one_smul x; exact smul (-1) hx
 
 lemma sub (hx : x ∈ p) (hy : y ∈ p) : x - y ∈ p := add hx (neg hy)
 
 lemma sum {ι : Type w} [decidable_eq ι] {t : finset ι} {f : ι → β} :
   (∀c∈t, f c ∈ p) → t.sum f ∈ p :=
-finset.induction_on t (by simp [zero]) (by simp [add] {contextual := tt})
+finset.induction_on t □ □!
+
+lemma sum2 {ι : Type w} [decidable_eq ι] {t : finset ι} {f : ι → β} :
+  (∀c∈t, f c ∈ p) → t.sum f ∈ p :=
+finset.induction_on t □ □!
 
 lemma smul_ne_0 {a : α} {b : β} (h : a ≠ 0 → b ∈ p) : a • b ∈ p :=
 classical.by_cases
-  (assume : a = 0, by simp [this, zero])
+  (assume : a = 0, □!)
   (assume : a ≠ 0, by simp [h this, smul])
 
-instance single_zero : is_submodule ({0} : set β) :=
-by refine {..}; by simp {contextual := tt}
+instance single_zero : is_submodule ({0} : set β) := □
 
-instance univ : is_submodule (set.univ : set β) :=
-by refine {..}; by simp {contextual := tt}
+instance univ : is_submodule (set.univ : set β) := □
 
 instance image {f : β → γ} (hf : is_linear_map f) : is_submodule (f '' p) :=
 { is_submodule .
   zero_ := ⟨0, zero, hf.zero⟩,
   add_  := assume c₁ c₂ ⟨b₁, hb₁, eq₁⟩ ⟨b₂, hb₂, eq₂⟩,
     ⟨b₁ + b₂, add hb₁ hb₂, by simp [eq₁, eq₂, hf.add]⟩,
-  smul  := assume a c ⟨b, hb, eq⟩, ⟨a • b, smul a hb, by simp [hf.smul, eq]⟩ }
+  smul  := assume a c ⟨b, hb, eq⟩, ⟨a • b, smul a hb, □!⟩ }
 
 instance range {f : β → γ} (hf : is_linear_map f) : is_submodule (set.range f) :=
 by rw [← set.image_univ]; exact is_submodule.image hf
@@ -241,15 +241,23 @@ by refine {..}; simp [hf.zero, hf.add, hf.smul, zero, add, smul] {contextual:=tt
 
 instance add_submodule : is_submodule {z | ∃x∈p, ∃y∈p', z = x + y} :=
 { is_submodule .
-  zero_ := ⟨0, zero, 0, zero, by simp⟩,
+  zero_ := ⟨0, □, 0, □, □⟩,
   add_  := assume b₁ b₂ ⟨x₁, hx₁, y₁, hy₁, eq₁⟩ ⟨x₂, hx₂, y₂, hy₂, eq₂⟩,
     ⟨x₁ + x₂, add hx₁ hx₂, y₁ + y₂, add hy₁ hy₂, by simp [eq₁, eq₂]⟩,
   smul  := assume a b ⟨x, hx, y, hy, eq⟩,
     ⟨a • x, smul _ hx, a • y, smul _ hy, by simp [eq, smul_add]⟩ }
 
+local attribute [simp] zero add smul
+
 lemma Inter_submodule {ι : Sort w} {s : ι → set β} (h : ∀i, is_submodule (s i)) :
-  is_submodule (⋂i, s i) :=
-by refine {..}; simp [zero, add, smul] {contextual := tt}
+  is_submodule (⋂i, s i) := begin
+  weak_tidy,
+  simp_search,
+  simp_search,
+  simp_search,
+
+
+  end
 
 instance Inter_submodule' {ι : Sort w} {s : ι → set β} [h : ∀i, is_submodule (s i)] :
   is_submodule (⋂i, s i) :=

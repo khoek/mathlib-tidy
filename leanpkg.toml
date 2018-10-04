@@ -1,6 +1,7 @@
 [package]
 name = "mathlib"
 version = "0.1"
-lean_version = "3.4.1"
+lean_version = "khoek/klean:3.4.4"
 
 [dependencies]
+libk = {git = "https://github.com/khoek/libk", rev = "461caf0b2915dd612a5e9f4ad7f6b627506d4ec0"}
